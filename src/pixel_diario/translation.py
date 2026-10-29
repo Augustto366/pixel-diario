@@ -5,6 +5,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from .summarization import gerar_resumo
+
 
 _TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 
@@ -40,33 +42,30 @@ def traduzir(itens):
     """Traduz títulos e resumos; falhas preservam o texto original."""
     falhas = 0
     for item in itens:
-        titulo = item.get("titulo", "")
-        resumo = item.get("resumo", "")
-        try:
-            traduzido = _traduzir_texto(f"{titulo}\n{resumo}")
-            titulo_traduzido, separator, resumo_traduzido = traduzido.partition("\n")
-            if not separator or not titulo_traduzido.strip() or not resumo_traduzido.strip():
-                raise ValueError(
-                    "O serviço não preservou a separação entre título e resumo."
+        for campo in ("titulo", "resumo"):
+            original = item.get(campo, "")
+            try:
+                item[campo] = _traduzir_texto(original)
+            except (
+                urllib.error.URLError,
+                TimeoutError,
+                json.JSONDecodeError,
+                IndexError,
+                TypeError,
+                ValueError,
+            ) as error:
+                falhas += 1
+                print(
+                    f"Tradução indisponível para "
+                    f"{item.get('id', 'notícia')} ({campo}): {error}"
                 )
-        except (
-            urllib.error.URLError,
-            TimeoutError,
-            json.JSONDecodeError,
-            IndexError,
-            TypeError,
-            ValueError,
-        ) as error:
-            falhas += 1
-            print(
-                f"Tradução indisponível para {item.get('id', 'notícia')}: {error}"
-            )
-            continue
-        item["titulo"] = titulo_traduzido.strip()
-        item["resumo"] = resumo_traduzido.strip()
+        if item.get("resumo", "").startswith(
+            "O feed não forneceu detalhes além do título."
+        ):
+            item["resumo"] = gerar_resumo(item.get("titulo", ""), "")
     if falhas:
         print(
-            f"{falhas} notícia(s) permaneceram no idioma original; "
+            f"{falhas} campo(s) permaneceram no idioma original; "
             "a edição será publicada mesmo assim."
         )
     return itens
@@ -76,14 +75,8 @@ def traduzir_curiosidade(curiosidade):
     """Traduz um fato externo sem impedir sua publicação se o serviço falhar."""
     original = curiosidade["titulo"]
     try:
-        traduzido = _traduzir_texto(
-            f"{curiosidade['titulo']}\n{curiosidade['texto']}"
-        )
-        titulo, separator, texto = traduzido.partition("\n")
-        if not separator or not titulo.strip() or not texto.strip():
-            raise ValueError(
-                "O serviço não preservou a separação entre título e texto."
-            )
+        titulo = _traduzir_texto(curiosidade["titulo"])
+        texto = _traduzir_texto(curiosidade["texto"])
     except (
         urllib.error.URLError,
         TimeoutError,
