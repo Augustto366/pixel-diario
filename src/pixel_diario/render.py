@@ -6,10 +6,13 @@ from pathlib import Path
 from .config import MESES, PROJECT_ROOT, TEMPLATE_PATH
 
 
-def renderizar(itens, agora, pasta=PROJECT_ROOT, modelo=TEMPLATE_PATH):
+def renderizar(
+    itens, agora, pasta=PROJECT_ROOT, modelo=TEMPLATE_PATH, curiosidade=None
+):
     meta = {
         "data": f"{agora.day} de {MESES[agora.month - 1]} de {agora.year}",
         "itens": itens,
+        "curiosidade": curiosidade,
     }
     dados = json.dumps(meta, ensure_ascii=False).replace("</", "<\\/")
     template = Path(modelo).read_text(encoding="utf-8")

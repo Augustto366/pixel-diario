@@ -41,12 +41,21 @@ class ArchiveAndRenderTests(unittest.TestCase):
                 datetime(2026, 10, 29, tzinfo=timezone.utc),
                 root,
                 template,
+                curiosidade={
+                    "data": "2026-10-29",
+                    "titulo": "Fato do dia",
+                    "texto": "Texto curto.",
+                    "fonte": "Fonte oficial",
+                    "link": "https://example.com/fonte",
+                },
             )
 
             generated = (root / "index.html").read_text(encoding="utf-8")
 
         self.assertIn("<\\/script>", generated)
         self.assertNotIn("</script>;", generated)
+        self.assertIn('"curiosidade"', generated)
+        self.assertIn("https://example.com/fonte", generated)
 
 
 if __name__ == "__main__":

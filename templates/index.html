@@ -152,6 +152,21 @@
             box-shadow: inset 0 -2px var(--acc)
         }
 
+        .app.curiosity .chips,
+        .app.curiosity .list {
+            display: none
+        }
+
+        .curiosity-label,
+        .curiosity-source {
+            color: var(--mute);
+            font-size: 13px
+        }
+
+        .curiosity-source a {
+            color: var(--acc)
+        }
+
         .list {
             flex: 1;
             overflow: auto;
@@ -439,9 +454,10 @@
                 <h1>Pixel<span>.</span>Diário</h1>
                 <div class="sub" id="sub"></div>
                 <div class="prog"><i id="bar"></i></div>
-                <div class="tabs" id="tabs" role="tablist" aria-label="Edições de notícias">
+                <div class="tabs" id="tabs" role="tablist" aria-label="Conteúdo">
                     <button class="tab on" role="tab" aria-selected="true" data-view="hoje">Hoje</button>
                     <button class="tab" role="tab" aria-selected="false" data-view="anteriores">Anteriores</button>
+                    <button class="tab" role="tab" aria-selected="false" data-view="curiosidade">Curiosidade</button>
                 </div>
                 <div class="chips" id="chips"></div>
             </header>
@@ -459,6 +475,7 @@
         function items() { return view === "anteriores" ? H : I }
         function makeCats() { var cats = ["Todas"]; I.concat(H).forEach(function (n) { if (cats.indexOf(n.cat) < 0) cats.push(n.cat) }); cats.push("Não lidas"); return cats }
         function head() {
+            $("app").classList.toggle("curiosity", view === "curiosidade");
             var r = I.filter(function (n) { return S[n.id] === 2 }).length;
             $("sub").textContent = D.data + ", atualizado às 20h. " + r + " de " + I.length + " lidas";
             $("bar").style.width = (I.length ? r / I.length * 100 : 0) + "%";
@@ -466,6 +483,7 @@
             Array.prototype.forEach.call($("tabs").querySelectorAll(".tab"), function (t) { var on = t.getAttribute("data-view") === view; t.classList.toggle("on", on); t.setAttribute("aria-selected", on ? "true" : "false") })
         }
         function list() {
+            if (view === "curiosidade") { $("list").innerHTML = ""; return }
             var base = items();
             if (view === "anteriores" && histErro) { $("list").innerHTML = '<div class="vazio"><b>Histórico indisponível</b>' + esc(histErro) + '</div>'; return }
             if (view === "anteriores" && !base.length) { $("list").innerHTML = '<div class="vazio"><b>Nenhuma notícia anterior</b>As edições anteriores aparecerão aqui após a próxima atualização.</div>'; return }
@@ -488,12 +506,30 @@
             $("bk").onclick = function () { $("app").classList.remove("open") };
             $("go").onclick = function () { mark(n.id, 2); this.classList.add("done"); this.textContent = "Lido, abrir de novo"; est(n); head(); list() }
         }
+        function showCuriosity() {
+            var curiosity = D.curiosidade;
+            if (!curiosity) {
+                $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="vazio"><b>Curiosidade indisponível</b>A curiosidade de hoje ainda não foi gerada.</div></article>';
+            } else {
+                var source = /^https:\/\//.test(curiosity.link) ? curiosity.link : "#";
+                $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="curiosity-label">Curiosidade do dia · ' + esc(new Date(curiosity.data + "T12:00:00").toLocaleDateString("pt-BR")) + '</div><h2>' + esc(curiosity.titulo) + '</h2><p>' + esc(curiosity.texto) + '</p><p class="curiosity-source">Fonte: <a href="' + esc(source) + '" target="_blank" rel="noopener">' + esc(curiosity.fonte) + '</a></p></article>';
+            }
+            $("read").scrollTop = 0;
+            $("app").classList.add("open");
+            $("back-curiosity").onclick = function () {
+                view = "hoje";
+                head();
+                list();
+                $("read").innerHTML = '<div class="vazio"><b>Escolha uma notícia</b>Selecione uma notícia na lista para ler o resumo.</div>';
+                $("app").classList.remove("open");
+            };
+        }
         function est(n) {
             var s = S[n.id] || 0, e = $("est"); if (!e) return;
             e.innerHTML = s === 0 ? 'Sem marcação.' : (s === 2 ? 'Marcada como lida.' : 'Marcada como visitada.') + '<button id="un">Desmarcar</button>';
             var u = $("un"); if (u) u.onclick = function () { delete S[n.id]; save(); show(sel, false, true) }
         }
-        $("tabs").onclick = function (e) { var next = e.target.getAttribute("data-view"); if (!next || next === view) return; view = next; cur = "Todas"; sel = -1; head(); list(); $("read").innerHTML = '<div class="vazio"><b>Escolha uma notícia</b>Selecione uma notícia na lista para ler o resumo.</div>' };
+        $("tabs").onclick = function (e) { var next = e.target.getAttribute("data-view"); if (!next || next === view) return; view = next; cur = "Todas"; sel = -1; head(); list(); if (view === "curiosidade") { showCuriosity(); return } $("app").classList.remove("open"); $("read").innerHTML = '<div class="vazio"><b>Escolha uma notícia</b>Selecione uma notícia na lista para ler o resumo.</div>' };
         $("chips").onclick = function (e) { var c = e.target.getAttribute("data-c"); if (c) { cur = c; head(); list() } };
         $("list").onclick = function (e) { var el = e.target.closest(".item"); if (el) show(+el.getAttribute("data-i"), true) };
         document.addEventListener("keydown", function (e) { if (e.key !== "j" && e.key !== "k") return; var n = sel + (e.key === "j" ? 1 : -1); if (n >= 0 && n < items().length) show(n, false) });

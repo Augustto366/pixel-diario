@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from .archive import atualizar_historico
 from .config import FEEDS
+from .curiosity import curiosidade_do_dia
 from .feeds import baixar, ler_feed
 from .render import renderizar
 from .selection import escolher
@@ -27,6 +28,7 @@ def main():
         print("Poucos itens coletados; mantendo a edição anterior.")
         sys.exit(1)
     itens = traduzir(itens)
+    curiosidade = curiosidade_do_dia(agora)
     atualizar_historico(agora)
-    renderizar(itens, agora)
+    renderizar(itens, agora, curiosidade=curiosidade)
     print(f"Edição gerada com {len(itens)} notícias.")

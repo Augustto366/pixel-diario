@@ -28,6 +28,10 @@ Títulos e resumos são traduzidos para português pelo endpoint público do Goo
 Tradutor; a tradução é uma tentativa gratuita, sujeita a limites e mudanças no
 serviço. Se ela falhar, o texto original é mantido e a edição continua.
 
+Uma aba discreta de curiosidade exibe um fato histórico diferente por dia,
+atualizado junto com a edição das 20h (horário de Brasília). Cada fato tem link
+para sua fonte; a seleção vem de uma coleção editorial local, sem API paga.
+
 Como a geração usa o conteúdo que os feeds disponibilizam, um resumo pode ser
 curto quando a fonte fornece poucos detalhes. Nesse caso, o site informa que
 não havia conteúdo além do título, em vez de inventar informações.
@@ -39,6 +43,7 @@ src/pixel_diario/
   archive.py       persistência e leitura do histórico
   cli.py           fluxo de atualização
   config.py        feeds, regras editoriais e caminhos
+  curiosity.py    curiosidades diárias com fontes
   feeds.py         download e parsing de RSS/Atom
   render.py        geração de index.html a partir do template
   selection.py     agrupamento, classificação e pontuação
