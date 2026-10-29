@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pixel-diario"
+version = "1.0.0"
+description = "Gerador estático de notícias de games do Pixel Diário"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+dependencies = [
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
+
+[project.scripts]
+pixel-diario = "pixel_diario.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
