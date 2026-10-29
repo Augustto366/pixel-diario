@@ -90,7 +90,7 @@ def ler_feed(conteudo, fonte, peso):
         if dt is None:
             continue
         saida.append({"titulo": limpar("".join(t.itertext()), 200), "link": link, "data": dt,
-                      "resumo": limpar("".join(s.itertext()) if s is not None else ""),
+                      "resumo": limpar("".join(s.itertext()) if s is not None else "", 1800),
                       "fonte": fonte, "peso": peso})
     return saida
 
@@ -156,8 +156,13 @@ def traduzir(itens):
         return itens
     base = [{"i": n, "titulo": it["titulo"], "resumo": it["resumo"]} for n, it in enumerate(itens)]
     prompt = ("Você edita um portal de notícias de games. Para cada item, devolva em português do Brasil: "
-              "'titulo' (traduzido, natural), 'resumo' (1 a 2 frases, escritas com suas palavras, sem copiar o original) "
-              "e 'importa' (1 frase sobre por que a notícia importa para o mercado ou para quem joga). "
+              "'titulo' (traduzido, natural), 'resumo' (2 a 3 frases próprias, claras e específicas, "
+              "com cerca de 35 a 60 palavras, que expliquem o fato principal e os detalhes concretos disponíveis "
+              "para que a pessoa entenda o núcleo da notícia sem abrir o link) e 'importa' "
+              "(1 frase sobre por que a notícia importa para o mercado ou para quem joga). "
+              "Não use frases vagas como 'a matéria aborda'; não repita apenas o título; não invente fatos, "
+              "números, motivos ou consequências que não estejam no material. Se o trecho for limitado, "
+              "explique com clareza apenas o que é possível confirmar. "
               "Responda SOMENTE com um array JSON de objetos {i, titulo, resumo, importa}, sem texto extra.\n\n"
               + json.dumps(base, ensure_ascii=False))
     corpo = json.dumps({"model": MODELO_IA, "max_tokens": 6000,
@@ -186,6 +191,46 @@ def renderizar(itens, agora, pasta="."):
     with open(os.path.join(pasta, "index.html"), "w", encoding="utf-8") as f:
         f.write(modelo.replace("__DADOS__", dados))
 
+def data_publicacao(rotulo, fallback):
+    m = re.fullmatch(r"(\d{1,2}) de ([a-zç]+) de (\d{4})", (rotulo or "").lower())
+    if not m or m.group(2) not in MESES:
+        return fallback.isoformat(timespec="seconds")
+    return datetime(int(m.group(3)), MESES.index(m.group(2)) + 1, int(m.group(1)),
+                    12, tzinfo=ZoneInfo("America/Sao_Paulo")).isoformat(timespec="seconds")
+
+def atualizar_historico(agora, pasta="."):
+    caminho = os.path.join(pasta, "historico.json")
+    if os.path.exists(caminho):
+        with open(caminho, encoding="utf-8") as f:
+            historico = json.load(f)
+        if not isinstance(historico, list) or any(
+                not isinstance(n, dict) or not isinstance(n.get("id"), str) for n in historico):
+            raise ValueError("historico.json precisa conter uma lista de notícias com id.")
+    else:
+        historico = []
+
+    caminho_index = os.path.join(pasta, "index.html")
+    if os.path.exists(caminho_index):
+        with open(caminho_index, encoding="utf-8") as f:
+            pagina = f.read()
+        anterior = re.search(r"var D=(\{.*?\}),I=D\.itens", pagina, re.S)
+        if anterior:
+            edicao = json.loads(anterior.group(1))
+            publicado_em = data_publicacao(edicao.get("data"), agora)
+            for noticia in edicao.get("itens", []):
+                if isinstance(noticia, dict) and isinstance(noticia.get("id"), str):
+                    noticia.setdefault("publicado_em", publicado_em)
+                    historico.append(noticia)
+
+    unicas = {}
+    for noticia in historico:
+        unicas.setdefault(noticia["id"], noticia)
+    historico = sorted(unicas.values(), key=lambda n: n.get("publicado_em", ""), reverse=True)
+    with open(caminho, "w", encoding="utf-8") as f:
+        json.dump(historico, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    return historico
+
 def main():
     agora = datetime.now(ZoneInfo("America/Sao_Paulo"))
     todos = []
@@ -200,7 +245,9 @@ def main():
     if len(itens) < 5:
         print("Poucos itens coletados; mantendo a edição anterior.")
         sys.exit(1)
-    renderizar(traduzir(itens), agora)
+    itens = traduzir(itens)
+    atualizar_historico(agora)
+    renderizar(itens, agora)
     print(f"Edição gerada com {len(itens)} notícias.")
 
 if __name__ == "__main__":
