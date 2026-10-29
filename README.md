@@ -23,10 +23,10 @@ python -m pixel_diario
 ```
 
 O comando legado `python atualizar.py` também continua disponível. Os resumos
-são extraídos localmente dos trechos RSS/Atom, sem depender de uma API paga.
-Títulos e resumos são traduzidos para português pelo endpoint público do Google
-Tradutor; a tradução é uma tentativa gratuita, sujeita a limites e mudanças no
-serviço. Se ela falhar, o texto original é mantido e a edição continua.
+são extraídos dos artigos completos quando as páginas de origem permitem
+acesso, usando o trecho RSS/Atom como fallback. As notícias aparecem no idioma
+original; quando disponível, uma tradução gratuita fica acessível pelo botão
+"Traduzir para português" e pode ser revertida em "Ver original".
 
 Uma aba discreta de curiosidade busca artigos inéditos nas categorias da
 Wikipédia sobre história e indústria de videogames, usando o resumo do artigo
@@ -46,6 +46,7 @@ não havia conteúdo além do título, em vez de inventar informações.
 ```text
 src/pixel_diario/
   archive.py       persistência e leitura do histórico
+  article_content.py extração das matérias para resumos completos
   cli.py           fluxo de atualização
   config.py        feeds, regras editoriais e caminhos
   curiosity.py     curiosidades web sem repetição

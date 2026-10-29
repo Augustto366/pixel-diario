@@ -57,6 +57,16 @@ class ArchiveAndRenderTests(unittest.TestCase):
         self.assertIn('"curiosidade"', generated)
         self.assertIn("https://example.com/fonte", generated)
 
+    def test_page_template_has_original_and_translation_toggle(self):
+        from pixel_diario.config import TEMPLATE_PATH
+
+        template = TEMPLATE_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("Traduzir para português", template)
+        self.assertIn("Ver original", template)
+        self.assertIn("n.titulo_pt", template)
+        self.assertIn("n.resumo_pt", template)
+
 
 if __name__ == "__main__":
     unittest.main()

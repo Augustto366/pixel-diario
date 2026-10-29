@@ -7,7 +7,6 @@ import urllib.request
 
 from .summarization import gerar_resumo
 
-
 _TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 
 
@@ -39,13 +38,25 @@ def _traduzir_texto(texto):
 
 
 def traduzir(itens):
-    """Traduz títulos e resumos; falhas preservam o texto original."""
+    """Anexa traduções opcionais sem substituir os textos originais."""
     falhas = 0
     for item in itens:
-        for campo in ("titulo", "resumo"):
+        for campo, destino in (
+            ("titulo", "titulo_pt"),
+            ("resumo", "resumo_pt"),
+        ):
             original = item.get(campo, "")
+            if (
+                campo == "resumo"
+                and original.startswith(
+                    "O feed não forneceu detalhes além do título."
+                )
+                and item.get("titulo_pt")
+            ):
+                item[destino] = gerar_resumo(item["titulo_pt"], "")
+                continue
             try:
-                item[campo] = _traduzir_texto(original)
+                item[destino] = _traduzir_texto(original)
             except (
                 urllib.error.URLError,
                 TimeoutError,
@@ -57,26 +68,22 @@ def traduzir(itens):
                 falhas += 1
                 print(
                     f"Tradução indisponível para "
-                    f"{item.get('id', 'notícia')} ({campo}): {error}"
+                    f"{item.get('id', 'notícia')} ({destino}): {error}"
                 )
-        if item.get("resumo", "").startswith(
-            "O feed não forneceu detalhes além do título."
-        ):
-            item["resumo"] = gerar_resumo(item.get("titulo", ""), "")
     if falhas:
         print(
-            f"{falhas} campo(s) permaneceram no idioma original; "
+            f"{falhas} tradução(ões) não foram obtidas; "
             "a edição será publicada mesmo assim."
         )
     return itens
 
 
 def traduzir_curiosidade(curiosidade):
-    """Traduz um fato externo sem impedir sua publicação se o serviço falhar."""
+    """Anexa a tradução de um fato sem substituir o idioma da fonte."""
     original = curiosidade["titulo"]
     try:
-        titulo = _traduzir_texto(curiosidade["titulo"])
-        texto = _traduzir_texto(curiosidade["texto"])
+        titulo_pt = _traduzir_texto(curiosidade["titulo"])
+        texto_pt = _traduzir_texto(curiosidade["texto"])
     except (
         urllib.error.URLError,
         TimeoutError,
@@ -89,6 +96,6 @@ def traduzir_curiosidade(curiosidade):
             f"Tradução da curiosidade indisponível ({original}): {error}"
         )
         return curiosidade
-    curiosidade["titulo"] = titulo.strip()
-    curiosidade["texto"] = texto.strip()
+    curiosidade["titulo_pt"] = titulo_pt
+    curiosidade["texto_pt"] = texto_pt
     return curiosidade

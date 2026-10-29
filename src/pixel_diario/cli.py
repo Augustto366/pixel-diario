@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from .archive import atualizar_historico
+from .article_content import enriquecer_resumos
 from .config import FEEDS
 from .curiosity import curiosidade_do_dia
 from .feeds import baixar, ler_feed
@@ -27,6 +28,7 @@ def main():
     if len(itens) < 5:
         print("Poucos itens coletados; mantendo a edição anterior.")
         sys.exit(1)
+    itens = enriquecer_resumos(itens)
     itens = traduzir(itens)
     curiosidade = curiosidade_do_dia(agora)
     atualizar_historico(agora)

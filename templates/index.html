@@ -167,6 +167,24 @@
             color: var(--acc)
         }
 
+        .translate-toggle {
+            display: inline-block;
+            margin: 0 0 12px;
+            padding: 4px 10px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: none;
+            color: var(--mute);
+            font: inherit;
+            font-size: 12px;
+            cursor: pointer
+        }
+
+        .translate-toggle:hover {
+            border-color: var(--acc);
+            color: var(--acc)
+        }
+
         .list {
             flex: 1;
             overflow: auto;
@@ -499,11 +517,19 @@
             var cov = n.outras && n.outras.length ? '<p class="cov">Também coberto por ' + esc(n.outras.join(", ")) + '.</p>' : "";
             var publicado = view === "anteriores" && n.publicado_em ? '<p class="cov">Publicado em ' + esc(new Date(n.publicado_em).toLocaleDateString("pt-BR")) + '.</p>' : "";
             var ok = /^https?:\/\//.test(n.link) ? n.link : "#", s = S[n.id];
-            $("read").innerHTML = '<article><button class="back" id="bk">Voltar à lista</button><div class="cat">' + esc(n.cat) + '<em>' + esc(n.fonte) + '</em></div><h2>' + esc(n.titulo) + '</h2>' + publicado + '<p>' + esc(n.resumo) + '</p>' + (n.importa ? '<p class="why">' + esc(n.importa) + '</p>' : '') + cov +
+            $("read").innerHTML = '<article><button class="back" id="bk">Voltar à lista</button><div class="cat">' + esc(n.cat) + '<em>' + esc(n.fonte) + '</em></div>' + ((n.titulo_pt || n.resumo_pt) ? '<button class="translate-toggle" id="translate" type="button" aria-pressed="false">Traduzir para português</button>' : '') + '<h2 id="news-title">' + esc(n.titulo) + '</h2>' + publicado + '<p id="news-summary">' + esc(n.resumo) + '</p>' + (n.importa ? '<p class="why">' + esc(n.importa) + '</p>' : '') + cov +
                 '<a class="go' + (s === 2 ? ' done' : '') + '" id="go" href="' + esc(ok) + '" target="_blank" rel="noopener">' + (s === 2 ? 'Lido, abrir de novo' : 'Ler na fonte') + '</a>' +
                 '<div class="estado" id="est"></div></article>';
             est(n); $("read").scrollTop = 0; head(); list(); if (mobile) $("app").classList.add("open");
             $("bk").onclick = function () { $("app").classList.remove("open") };
+            var translate = $("translate");
+            if (translate) translate.onclick = function () {
+                var portuguese = this.getAttribute("aria-pressed") !== "true";
+                $("news-title").textContent = portuguese ? (n.titulo_pt || n.titulo) : n.titulo;
+                $("news-summary").textContent = portuguese ? (n.resumo_pt || n.resumo) : n.resumo;
+                this.setAttribute("aria-pressed", portuguese ? "true" : "false");
+                this.textContent = portuguese ? "Ver original" : "Traduzir para português";
+            };
             $("go").onclick = function () { mark(n.id, 2); this.classList.add("done"); this.textContent = "Lido, abrir de novo"; est(n); head(); list() }
         }
         function showCuriosity() {
@@ -512,7 +538,15 @@
                 $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="vazio"><b>Curiosidade indisponível</b>A curiosidade de hoje ainda não foi gerada.</div></article>';
             } else {
                 var source = /^https:\/\//.test(curiosity.link) ? curiosity.link : "#";
-                $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="curiosity-label">Curiosidade do dia · ' + esc(new Date(curiosity.data + "T12:00:00").toLocaleDateString("pt-BR")) + '</div><h2>' + esc(curiosity.titulo) + '</h2><p>' + esc(curiosity.texto) + '</p><p class="curiosity-source">Fonte: <a href="' + esc(source) + '" target="_blank" rel="noopener">' + esc(curiosity.fonte) + '</a> · licença CC BY-SA</p></article>';
+                $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="curiosity-label">Curiosidade do dia · ' + esc(new Date(curiosity.data + "T12:00:00").toLocaleDateString("pt-BR")) + '</div>' + ((curiosity.titulo_pt || curiosity.texto_pt) ? '<button class="translate-toggle" id="translate-curiosity" type="button" aria-pressed="false">Traduzir para português</button>' : '') + '<h2 id="curiosity-title">' + esc(curiosity.titulo) + '</h2><p id="curiosity-text">' + esc(curiosity.texto) + '</p><p class="curiosity-source">Fonte: <a href="' + esc(source) + '" target="_blank" rel="noopener">' + esc(curiosity.fonte) + '</a> · licença CC BY-SA</p></article>';
+                var translateCuriosity = $("translate-curiosity");
+                if (translateCuriosity) translateCuriosity.onclick = function () {
+                    var portuguese = this.getAttribute("aria-pressed") !== "true";
+                    $("curiosity-title").textContent = portuguese ? (curiosity.titulo_pt || curiosity.titulo) : curiosity.titulo;
+                    $("curiosity-text").textContent = portuguese ? (curiosity.texto_pt || curiosity.texto) : curiosity.texto;
+                    this.setAttribute("aria-pressed", portuguese ? "true" : "false");
+                    this.textContent = portuguese ? "Ver original" : "Traduzir para português";
+                };
             }
             $("read").scrollTop = 0;
             $("app").classList.add("open");
