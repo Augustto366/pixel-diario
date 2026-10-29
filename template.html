@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Diário</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎮%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#fff;--ink:#222;--soft:#444;--mute:#8a8a8a;--line:#ececec;--acc:#b8281e;--accbg:#fbf3f2;--ok:#2f7d4f;--ease:cubic-bezier(.2,.7,.2,1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--ink:#ececec;--soft:#c8c8c8;--mute:#8d8d8d;--line:#262626;--acc:#ff7a6e;--accbg:#1d1716;--ok:#6fcf97}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:minmax(360px,440px) 1fr;height:100%}
+.side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+header{padding:28px 28px 16px}
+h1{margin:0;font:700 28px/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+h1 span{color:var(--acc)}
+.sub{margin-top:6px;color:var(--mute);font-size:13px}
+.prog{height:2px;background:var(--line);margin-top:14px;border-radius:2px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .6s var(--ease)}
+.chips{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:14px}
+.chip{border:0;background:none;padding:2px 0;color:var(--mute);font:inherit;font-size:13.5px;cursor:pointer;background-image:linear-gradient(var(--acc),var(--acc));background-repeat:no-repeat;background-position:0 100%;background-size:0 1.5px;transition:color .2s,background-size .3s var(--ease)}
+.chip:hover{color:var(--ink);background-size:100% 1.5px}
+.chip.on{color:var(--acc);background-size:100% 1.5px}
+.list{flex:1;overflow:auto;padding:4px 0 24px}
+.item{position:relative;display:grid;grid-template-columns:30px 1fr;width:100%;padding:15px 28px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:background .25s}
+.item::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;background:var(--acc);border-radius:0 3px 3px 0;transform:scaleY(0);transition:transform .3s var(--ease)}
+.item:hover{background:var(--accbg)}.item:hover::before,.item.on::before{transform:scaleY(1)}
+.item.on{background:var(--accbg)}
+.num{font:italic 15px Georgia,serif;color:var(--mute);padding-top:1px;transition:color .25s,transform .3s var(--ease)}
+.item:hover .num{color:var(--acc);transform:translateX(2px)}
+.cat{font-size:12.5px;color:var(--acc)}
+.cat em{font-style:normal;color:var(--mute);margin-left:8px}
+.t{font:600 16.5px/1.35 Georgia,serif;margin-top:3px;transition:color .25s}
+.item:hover .t{color:var(--acc)}
+.st{display:none;margin-top:6px;font-size:12px}
+.item.v .st,.item.r .st{display:block;color:var(--mute)}
+.item.r .st{color:var(--ok)}
+.item.v:not(.on) .t{color:var(--soft);font-weight:500}
+.item.r:not(.on) .t{color:var(--mute);font-weight:400}
+.read{overflow:auto;padding:64px 6vw}
+article{max-width:660px;margin:0 auto;animation:in .45s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+article .cat{font-size:14px}
+article h2{font:700 34px/1.2 Georgia,serif;letter-spacing:-.02em;margin:10px 0 22px}
+article p{font:17.5px/1.75 Georgia,serif;color:var(--soft);margin:0 0 18px}
+.why{border-left:3px solid var(--acc);padding-left:16px}
+.cov{font-size:13.5px;color:var(--mute)}
+.go{display:inline-block;margin-top:14px;padding:10px 20px;border:1.5px solid var(--acc);border-radius:999px;color:var(--acc);text-decoration:none;font-weight:600;font-size:14.5px;transition:background .25s,color .25s,transform .25s var(--ease),box-shadow .25s}
+.go:hover{background:var(--acc);color:var(--bg);transform:translateY(-1px);box-shadow:0 6px 18px -8px var(--acc)}
+.go.done{border-color:var(--ok);color:var(--ok)}.go.done:hover{background:var(--ok);color:var(--bg);box-shadow:0 6px 18px -8px var(--ok)}
+.estado{margin-top:18px;font-size:13px;color:var(--mute)}
+.estado button{border:0;background:none;color:var(--mute);font:inherit;text-decoration:underline;cursor:pointer;margin-left:6px}
+.estado button:hover{color:var(--acc)}
+.vazio{max-width:420px;margin:12vh auto 0;color:var(--mute);text-align:left}
+.vazio b{display:block;font:700 22px Georgia,serif;color:var(--ink);margin-bottom:8px}
+.back{display:none;border:0;background:none;color:var(--acc);font:inherit;padding:0 0 20px;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media(max-width:860px){.app{grid-template-columns:1fr}.read{display:none;padding:26px 22px}.app.open .side{display:none}.app.open .read{display:block}.back{display:block}article h2{font-size:27px}}
+@media(prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<aside class="side">
+<header>
+<h1>Pixel<span>.</span>Diário</h1>
+<div class="sub" id="sub"></div>
+<div class="prog"><i id="bar"></i></div>
+<div class="chips" id="chips"></div>
+</header>
+<div class="list" id="list"></div>
+</aside>
+<main class="read" id="read"></main>
+</div>
+<script>
+var D=__DADOS__,I=D.itens,KEY="pixeldiario_estado",cur="Todas",sel=-1;
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var S=(function(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return{}}})();
+(function(){var ids={};I.forEach(function(n){ids[n.id]=1});for(var k in S)if(!ids[k])delete S[k]})();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function mark(id,v){if((S[id]||0)<v){S[id]=v;save()}}
+var cats=["Todas"];I.forEach(function(n){if(cats.indexOf(n.cat)<0)cats.push(n.cat)});cats.push("Não lidas");
+function head(){var r=I.filter(function(n){return S[n.id]===2}).length;
+$("sub").textContent=D.data+", atualizado às 20h. "+r+" de "+I.length+" lidas";
+$("bar").style.width=(I.length?r/I.length*100:0)+"%";
+$("chips").innerHTML=cats.map(function(c){return'<button class="chip'+(c===cur?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>'}).join("")}
+function list(){$("list").innerHTML=I.map(function(n,i){
+if(cur==="Não lidas"?S[n.id]===2:(cur!=="Todas"&&n.cat!==cur))return"";
+var s=S[n.id]||0;
+return'<button class="item'+(i===sel?' on':'')+(s===1?' v':'')+(s===2?' r':'')+'" data-i="'+i+'"><span class="num">'+(i+1)+'</span><span><div class="cat">'+esc(n.cat)+'<em>'+esc(n.fonte)+'</em></div><div class="t">'+esc(n.titulo)+'</div><div class="st">'+(s===2?'Lido':'Visitado')+'</div></span></button>'}).join("")}
+function show(i,mobile,nomark){sel=i;var n=I[i];if(!nomark)mark(n.id,1);
+var cov=n.outras&&n.outras.length?'<p class="cov">Também coberto por '+esc(n.outras.join(", "))+'.</p>':"";
+var ok=/^https?:\/\//.test(n.link)?n.link:"#",s=S[n.id];
+$("read").innerHTML='<article><button class="back" id="bk">Voltar à lista</button><div class="cat">'+esc(n.cat)+'<em>'+esc(n.fonte)+'</em></div><h2>'+esc(n.titulo)+'</h2><p>'+esc(n.resumo)+'</p>'+(n.importa?'<p class="why">'+esc(n.importa)+'</p>':'')+cov+
+'<a class="go'+(s===2?' done':'')+'" id="go" href="'+esc(ok)+'" target="_blank" rel="noopener">'+(s===2?'Lido, abrir de novo':'Ler na fonte')+'</a>'+
+'<div class="estado" id="est"></div></article>';
+est(n);$("read").scrollTop=0;head();list();if(mobile)$("app").classList.add("open");
+$("bk").onclick=function(){$("app").classList.remove("open")};
+$("go").onclick=function(){mark(n.id,2);this.classList.add("done");this.textContent="Lido, abrir de novo";est(n);head();list()}}
+function est(n){var s=S[n.id]||0,e=$("est");if(!e)return;
+e.innerHTML=s===0?'Sem marcação.':(s===2?'Marcada como lida.':'Marcada como visitada.')+'<button id="un">Desmarcar</button>';
+var u=$("un");if(u)u.onclick=function(){delete S[n.id];save();show(sel,false,true)}}
+$("chips").onclick=function(e){var c=e.target.getAttribute("data-c");if(c){cur=c;head();list()}};
+$("list").onclick=function(e){var el=e.target.closest(".item");if(el)show(+el.getAttribute("data-i"),true)};
+document.addEventListener("keydown",function(e){if(e.key!=="j"&&e.key!=="k")return;var n=sel+(e.key==="j"?1:-1);if(n>=0&&n<I.length)show(n,false)});
+$("read").innerHTML='<div class="vazio"><b>Escolha uma notícia</b>Clicar no tópico marca como visitado. Abrir a fonte marca como lido. Use j e k para navegar.</div>';
+head();list();
+</script>
+</body>
+</html>
