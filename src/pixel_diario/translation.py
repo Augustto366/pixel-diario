@@ -70,3 +70,32 @@ def traduzir(itens):
             "a edição será publicada mesmo assim."
         )
     return itens
+
+
+def traduzir_curiosidade(curiosidade):
+    """Traduz um fato externo sem impedir sua publicação se o serviço falhar."""
+    original = curiosidade["titulo"]
+    try:
+        traduzido = _traduzir_texto(
+            f"{curiosidade['titulo']}\n{curiosidade['texto']}"
+        )
+        titulo, separator, texto = traduzido.partition("\n")
+        if not separator or not titulo.strip() or not texto.strip():
+            raise ValueError(
+                "O serviço não preservou a separação entre título e texto."
+            )
+    except (
+        urllib.error.URLError,
+        TimeoutError,
+        json.JSONDecodeError,
+        IndexError,
+        TypeError,
+        ValueError,
+    ) as error:
+        print(
+            f"Tradução da curiosidade indisponível ({original}): {error}"
+        )
+        return curiosidade
+    curiosidade["titulo"] = titulo.strip()
+    curiosidade["texto"] = texto.strip()
+    return curiosidade

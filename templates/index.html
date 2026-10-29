@@ -512,7 +512,7 @@
                 $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="vazio"><b>Curiosidade indisponível</b>A curiosidade de hoje ainda não foi gerada.</div></article>';
             } else {
                 var source = /^https:\/\//.test(curiosity.link) ? curiosity.link : "#";
-                $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="curiosity-label">Curiosidade do dia · ' + esc(new Date(curiosity.data + "T12:00:00").toLocaleDateString("pt-BR")) + '</div><h2>' + esc(curiosity.titulo) + '</h2><p>' + esc(curiosity.texto) + '</p><p class="curiosity-source">Fonte: <a href="' + esc(source) + '" target="_blank" rel="noopener">' + esc(curiosity.fonte) + '</a></p></article>';
+                $("read").innerHTML = '<article><button class="back" id="back-curiosity">Voltar às notícias</button><div class="curiosity-label">Curiosidade do dia · ' + esc(new Date(curiosity.data + "T12:00:00").toLocaleDateString("pt-BR")) + '</div><h2>' + esc(curiosity.titulo) + '</h2><p>' + esc(curiosity.texto) + '</p><p class="curiosity-source">Fonte: <a href="' + esc(source) + '" target="_blank" rel="noopener">' + esc(curiosity.fonte) + '</a> · licença CC BY-SA</p></article>';
             }
             $("read").scrollTop = 0;
             $("app").classList.add("open");

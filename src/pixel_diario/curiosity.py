@@ -1,183 +1,216 @@
-"""Curiosidades históricas da indústria com fontes verificáveis."""
+"""Curiosidades diárias obtidas da Wikipédia sem repetir artigos publicados."""
 
+import json
+import tempfile
+import urllib.parse
+import urllib.request
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
-_FONTE_NINTENDO = (
-    "Nintendo — história corporativa",
-    "https://www.nintendo.co.jp/corporate/en/history/index.html",
+from .config import PROJECT_ROOT
+from .summarization import gerar_resumo
+from .translation import traduzir_curiosidade
+
+_API_URL = "https://en.wikipedia.org/w/api.php"
+_CATEGORIES = (
+    "Category:History of video games",
+    "Category:Video game industry",
 )
-
-_CURIOSIDADES = [
-    (
-        "A Nintendo começou com cartas",
-        "Em 1889, Fusajiro Yamauchi começou a fabricar e vender cartas "
-        "japonesas Hanafuda em Kyoto. A empresa só passaria a produzir "
-        "videogames muitas décadas depois.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Cartas ocidentais no Japão",
-        "Em 1902, a Nintendo começou a fabricar e vender as primeiras cartas "
-        "de baralho ocidentais produzidas no Japão, ampliando seu negócio "
-        "original muito antes dos videogames.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Cartas de plástico pioneiras",
-        "Em 1953, a Nintendo se tornou a primeira empresa a produzir em massa "
-        "cartas de plástico no Japão — um marco da fase da companhia dedicada "
-        "a jogos de cartas.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Disney chegou às cartas",
-        "Em 1959, a Nintendo começou a vender cartas de baralho com personagens "
-        "da Disney. A iniciativa ajudou a levar a empresa além das cartas "
-        "tradicionais japonesas.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "O nome atual veio em 1963",
-        "A companhia mudou seu nome para Nintendo Co., Ltd. em 1963. Naquele "
-        "momento, ela ainda estava longe de lançar seus consoles mais famosos.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Antes dos consoles, uma atração de tiro",
-        "Em 1973, a Nintendo desenvolveu o Laser Clay Shooting System, um "
-        "sistema de entretenimento para espaços de lazer — uma de suas "
-        "experiências com diversão eletrônica antes dos consoles domésticos.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Os primeiros videogames domésticos da Nintendo",
-        "Em 1977, a Nintendo lançou no Japão seus primeiros videogames para "
-        "casa: TV Game 15 e TV Game 6. Eles vieram antes do Famicom, conhecido "
-        "como NES fora do Japão.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "A Nintendo entrou nos arcades",
-        "Em 1978, a Nintendo desenvolveu e começou a vender máquinas de "
-        "videogame para fliperamas, antes de Donkey Kong se tornar um de seus "
-        "grandes sucessos arcade.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Game & Watch e a Nintendo of America",
-        "Em 1980, a Nintendo lançou a linha portátil Game & Watch e estabeleceu "
-        "uma subsidiária integral em Nova York. O ano marcou dois passos "
-        "importantes em portátil e expansão internacional.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Donkey Kong nasceu no arcade",
-        "A Nintendo desenvolveu e começou a vender Donkey Kong como jogo de "
-        "arcade em 1981. O título surgiu antes da estreia do Famicom e do NES.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Famicom e NES são o mesmo console",
-        "Em 1983, a Nintendo lançou no Japão o Family Computer System, ou "
-        "Famicom. O console ficou conhecido como Nintendo Entertainment System "
-        "nos mercados fora do Japão.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Super Mario Bros. chegou em 1985",
-        "A Nintendo começou a vender Super Mario Bros. para o NES em 1985, "
-        "dois anos depois do lançamento japonês do Famicom.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Game Boy foi lançado em 1989",
-        "A Nintendo lançou o Game Boy em 1989. No ano seguinte, apresentou "
-        "também o Super Famicom, chamado Super Nintendo Entertainment System "
-        "em outros mercados.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Nintendo 64 chegou em 1996",
-        "O Nintendo 64 foi lançado em 1996, mais de uma década depois do "
-        "Famicom e sete anos após o Game Boy.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "Nintendo DS veio antes do Wii",
-        "O portátil Nintendo DS foi lançado em 2004. O Wii chegou em 2006, "
-        "mostrando como a Nintendo mantinha linhas doméstica e portátil em "
-        "paralelo.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "O Switch combina console doméstico e portátil",
-        "Quando lançou o Nintendo Switch em 2017, a Nintendo o descreveu como "
-        "um console doméstico que também pode ser usado como portátil — uma "
-        "combinação das duas formas de jogar.",
-        _FONTE_NINTENDO,
-    ),
-    (
-        "O PlayStation original estreou no Japão",
-        "O primeiro PlayStation foi lançado no Japão em 3 de dezembro de 1994. "
-        "A chegada à América do Norte e à Europa aconteceu em setembro de 1995.",
-        (
-            "PlayStation — 30 anos de história",
-            "https://www.playstation.com/en-us/playstation-history/",
-        ),
-    ),
-    (
-        "O PlayStation usava CDs",
-        "O PlayStation original usava CD-ROM. Segundo a própria Sony, isso "
-        "permitia jogos maiores do que as alternativas em cartucho e ajudava "
-        "a fabricar os discos de forma mais rápida e econômica.",
-        (
-            "PlayStation — 30 anos de história",
-            "https://www.playstation.com/en-us/playstation-history/",
-        ),
-    ),
-    (
-        "O primeiro PlayStation passou de 100 milhões",
-        "A Sony informa que o PlayStation original vendeu mais de 102 milhões "
-        "de consoles no mundo entre 1994 e 2006.",
-        (
-            "PlayStation — 30 anos de história",
-            "https://www.playstation.com/en-us/playstation-history/",
-        ),
-    ),
-    (
-        "Steam existe desde 2003",
-        "A Valve criou o Steam em 2003 como canal de distribuição digital, "
-        "antes da popularização das lojas de aplicativos. A plataforma depois "
-        "se expandiu para milhares de criadores e editoras.",
-        (
-            "Valve — sobre a empresa",
-            "https://www.valvesoftware.com/en/about",
-        ),
-    ),
-]
+_USER_AGENT = (
+    "PixelDiario/1.0 "
+    "(https://github.com/augustto366/pixel-diario; daily curiosity feature)"
+)
+_STATE_FILENAME = "curiosidades_vistas.json"
+_LEGACY_SEEN_TITLES = {
+    "Donkey Kong",
+    "Famicom",
+    "Game Boy",
+    "Game & Watch",
+    "Hanafuda",
+    "History of Nintendo",
+    "Laser Clay Shooting System",
+    "Nintendo",
+    "Nintendo 64",
+    "Nintendo DS",
+    "Nintendo Playing Cards",
+    "Nintendo Switch",
+    "Nintendo Entertainment System",
+    "PlayStation (console)",
+    "Steam (service)",
+    "Super Mario Bros.",
+    "TV Game",
+    "Video game industry",
+    "Wii",
+}
 
 
-def curiosidade_do_dia(agora):
-    """Seleciona uma curiosidade diferente a cada dia no fuso de Brasília."""
-    data_local = agora.astimezone(ZoneInfo("America/Sao_Paulo")).date()
-    titulo, texto, (fonte, link) = _CURIOSIDADES[
-        data_local.toordinal() % len(_CURIOSIDADES)
-    ]
-    return {
-        "data": data_local.isoformat(),
-        "titulo": titulo,
-        "texto": texto,
-        "fonte": fonte,
-        "link": link,
-    }
+def _normalized_title(title):
+    return " ".join(title.casefold().split())
 
 
-def _validate_curiosities():
-    if not _CURIOSIDADES or any(
-        not title or not text or not source or not link.startswith("https://")
-        for title, text, (source, link) in _CURIOSIDADES
+def _request(parameters):
+    query = urllib.parse.urlencode(parameters)
+    request = urllib.request.Request(
+        f"{_API_URL}?{query}",
+        headers={"User-Agent": _USER_AGENT},
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        payload = json.loads(response.read())
+    if "error" in payload:
+        raise ValueError(f"Erro da API da Wikipédia: {payload['error']}")
+    return payload
+
+
+def _load_state(path):
+    if not path.exists():
+        return {
+            "category_index": 0,
+            "continue": None,
+            "pending": [],
+            "seen": [],
+            "seen_titles": sorted(_LEGACY_SEEN_TITLES),
+        }
+    with path.open(encoding="utf-8") as file:
+        state = json.load(file)
+    if (
+        not isinstance(state, dict)
+        or not isinstance(state.get("category_index"), int)
+        or state["category_index"] < 0
+        or not isinstance(state.get("pending"), list)
+        or not isinstance(state.get("seen"), list)
+        or not isinstance(state.get("seen_titles"), list)
+        or (
+            state.get("continue") is not None
+            and not isinstance(state["continue"], str)
+        )
+        or any(not isinstance(page_id, int) for page_id in state["seen"])
+        or any(not isinstance(title, str) for title in state["seen_titles"])
+        or any(
+            not isinstance(page, dict)
+            or not isinstance(page.get("pageid"), int)
+            or not isinstance(page.get("title"), str)
+            for page in state["pending"]
+        )
     ):
-        raise ValueError("Todas as curiosidades precisam de texto e fonte HTTPS.")
+        raise ValueError(f"Arquivo de histórico de curiosidades inválido: {path}")
+    return state
 
 
-_validate_curiosities()
+def _save_state(path, state):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            delete=False,
+        ) as file:
+            json.dump(state, file, ensure_ascii=False, indent=2)
+            file.write("\n")
+            temporary_path = Path(file.name)
+        temporary_path.replace(path)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
+
+
+def _next_page(state):
+    seen_titles = {
+        _normalized_title(title) for title in state["seen_titles"]
+    }
+    while state["category_index"] < len(_CATEGORIES):
+        if state["pending"]:
+            candidate = state["pending"].pop(0)
+            if (
+                candidate["pageid"] not in state["seen"]
+                and _normalized_title(candidate["title"])
+                not in seen_titles
+            ):
+                return candidate
+            continue
+
+        parameters = {
+            "action": "query",
+            "list": "categorymembers",
+            "cmtitle": _CATEGORIES[state["category_index"]],
+            "cmnamespace": 0,
+            "cmlimit": 50,
+            "format": "json",
+            "formatversion": 2,
+        }
+        continuation = state.get("continue")
+        if continuation:
+            parameters["cmcontinue"] = continuation
+            parameters["continue"] = "-||"
+
+        response = _request(parameters)
+        members = response.get("query", {}).get("categorymembers", [])
+        state["pending"] = [
+            {"pageid": page["pageid"], "title": page["title"]}
+            for page in members
+            if isinstance(page.get("pageid"), int)
+            and isinstance(page.get("title"), str)
+            and page["pageid"] not in state["seen"]
+        ]
+        state["continue"] = response.get("continue", {}).get("cmcontinue")
+        if not state["pending"] and state["continue"] is None:
+            state["category_index"] += 1
+            state["continue"] = None
+
+    raise RuntimeError(
+        "Não há mais artigos inéditos nas categorias de curiosidades da Wikipédia."
+    )
+
+
+def _article(page_id):
+    response = _request({
+        "action": "query",
+        "pageids": page_id,
+        "prop": "extracts|info",
+        "exintro": 1,
+        "explaintext": 1,
+        "inprop": "url",
+        "format": "json",
+        "formatversion": 2,
+    })
+    pages = response.get("query", {}).get("pages", [])
+    if not pages or pages[0].get("pageid") != page_id:
+        raise ValueError(f"A Wikipédia não retornou o artigo {page_id}.")
+    page = pages[0]
+    excerpt = page.get("extract", "").strip()
+    link = page.get("fullurl", "").strip()
+    if not excerpt or not link.startswith("https://"):
+        raise ValueError(f"O artigo {page_id} não tem resumo ou link válido.")
+    return page, excerpt, link
+
+
+def curiosidade_do_dia(agora, pasta=PROJECT_ROOT):
+    """Obtém o próximo artigo inédito e registra sua publicação."""
+    data_local = agora.astimezone(ZoneInfo("America/Sao_Paulo")).date()
+    caminho_estado = Path(pasta) / _STATE_FILENAME
+    estado = _load_state(caminho_estado)
+
+    while True:
+        candidato = _next_page(estado)
+        page_id = candidato["pageid"]
+        try:
+            artigo, trecho, link = _article(page_id)
+        except ValueError as error:
+            print(f"Artigo ignorado ({candidato['title']}): {error}")
+            estado["seen"].append(page_id)
+            continue
+
+        titulo_original = artigo.get("title") or candidato["title"]
+        texto = gerar_resumo(titulo_original, trecho)
+        curiosidade = traduzir_curiosidade({
+            "data": data_local.isoformat(),
+            "titulo": titulo_original,
+            "texto": texto,
+            "fonte": f"Wikipédia — {titulo_original}",
+            "link": link,
+        })
+        estado["seen"].append(page_id)
+        estado["seen_titles"].append(titulo_original)
+        _save_state(caminho_estado, estado)
+        return curiosidade

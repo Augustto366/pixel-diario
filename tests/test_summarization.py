@@ -37,6 +37,16 @@ class SummarizationTests(unittest.TestCase):
             excerpt,
         )
 
+    def test_keeps_exclamation_mark_in_game_title_with_its_sentence(self):
+        excerpt = (
+            "Spacewar! was developed by students in 1962 as one of the first "
+            "computer games. It inspired later developers."
+        )
+
+        summary = gerar_resumo("Early video game history", excerpt)
+
+        self.assertIn("Spacewar! was developed", summary)
+
 
 if __name__ == "__main__":
     unittest.main()

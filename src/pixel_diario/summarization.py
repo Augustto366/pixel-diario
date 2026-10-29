@@ -10,7 +10,7 @@ _STOP_WORDS = set(
     "como da das de do dos e em entre foi isso mais mas na nas no nos o os ou "
     "para pela pelas pelo pelos por que se sem sua suas um uma uns umas".split()
 )
-_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+")
+_SENTENCE_BOUNDARY = re.compile(r'(?<=[.!?])\s+(?=[A-ZÀ-Þ0-9"“])')
 _WORD = re.compile(r"\b[\w'-]+\b", re.UNICODE)
 
 
